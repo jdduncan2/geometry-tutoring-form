@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geometry Tutorial Sign-up</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Sandstone -->
+    <!-- Application Structure Plan: The application is designed as a linear, task-oriented SPA. The user follows a simple top-to-bottom flow: 1. Identify themselves (Name/ID). 2. Select desired tutorial slots from a dynamic, weekly calendar interface. 3. Review a real-time summary of their selections. 4. Submit. This structure is chosen for its simplicity and directness, perfectly matching the single-purpose nature of the source report (a sign-up form). It eliminates cognitive load by presenting one task at a time, with conditional logic (AM/PM buttons appearing on click) revealing complexity progressively. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Student Name/ID -> Goal: User Identification -> Presentation: Standard HTML text inputs -> Interaction: Text entry -> Justification: Universally understood method for data entry.
+        - Report Info: Tutorial schedule -> Goal: Allow time selection -> Presentation: A dynamic HTML table mimicking the source image, with clickable cells for available slots. -> Interaction: Click a cell to select/deselect a specific teacher's slot. -> Justification: A table provides the best context for a weekly schedule, clearly showing days, times, and availability in a familiar format. This is more intuitive than a dynamic button list for this specific data.
+        - Report Info: Unavailable slots (Wednesday, Friday PM) -> Goal: Communicate constraints -> Presentation: Disabled, non-interactive cells in the table with distinct styling. -> Interaction: None (cursor-not-allowed). -> Justification: Visually communicates unavailability at a glance within the schedule's context.
+        - Report Info: User's chosen slots -> Goal: Provide confirmation -> Presentation: Dynamic HTML list -> Interaction: Updates in real-time as user makes selections. -> Justification: Provides constant, clear feedback, reducing errors and improving user confidence before submission.
+        - Note: No data visualizations like charts were specified in the source report, so Chart.js/Plotly.js were not used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .slot-selected {
+            background-color: #10b981 !important; /* Tailwind's emerald-500 */
+            color: white !important;
+            border-color: #059669 !important; /* Tailwind's emerald-600 */
+            transform: scale(1.03);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="bg-stone-100">
+
+    <div class="container mx-auto max-w-4xl my-10 px-6 sm:px-8 py-8 bg-white rounded-xl shadow-lg">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-stone-800">Geometry Tutoring Schedule</h1>
+            <p class="text-stone-500 mt-2">Please fill out your details and select your desired time slots for the upcoming week.</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <div>
+                <label for="studentName" class="block text-sm font-medium text-stone-700">Student Name</label>
+                <input type="text" id="studentName" placeholder="e.g., Jane Doe" class="mt-1 block w-full px-3 py-2 bg-white border border-stone-300 rounded-md shadow-sm placeholder-stone-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" required>
+            </div>
+            <div>
+                <label for="studentId" class="block text-sm font-medium text-stone-700">Student ID</label>
+                <input type="text" id="studentId" placeholder="e.g., 123456" class="mt-1 block w-full px-3 py-2 bg-white border border-stone-300 rounded-md shadow-sm placeholder-stone-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" required>
+            </div>
+            <div class="md:col-span-2">
+                <label for="studentEmail" class="block text-sm font-medium text-stone-700">Conroe ISD Email Address</label>
+                <input type="email" id="studentEmail" placeholder="e.g., jdoe@conroeisd.net" class="mt-1 block w-full px-3 py-2 bg-white border border-stone-300 rounded-md shadow-sm placeholder-stone-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" required>
+            </div>
+        </div>
+
+        <div class="mt-10">
+            <h2 class="text-xl font-semibold text-stone-800 mb-4">Select Your Slots</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse text-center" id="schedule-table">
+                    <thead>
+                        <tr class="bg-stone-50">
+                            <th class="p-3 font-semibold text-sm text-stone-600 border border-stone-200"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="mt-10">
+            <h2 class="text-xl font-semibold text-stone-800">Your Selected Slots:</h2>
+            <div id="summary-section" class="mt-4 p-4 min-h-[60px] bg-stone-50 border border-stone-200 rounded-lg">
+                <ul id="summary-list" class="list-disc list-inside text-stone-700 space-y-1">
+                    <li id="no-slots-msg">No slots selected yet.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="mt-8 text-center">
+            <button id="submit-btn" class="w-full sm:w-auto bg-emerald-500 text-white font-bold py-3 px-12 rounded-lg hover:bg-emerald-600 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 shadow-md">
+                Submit Request
+            </button>
+            <p id="error-msg" class="text-red-500 mt-2 h-5"></p>
+            <p id="success-msg" class="text-green-600 mt-2 h-5 font-semibold"></p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tableHead = document.querySelector('#schedule-table thead tr');
+            const tableBody = document.querySelector('#schedule-table tbody');
+            const summaryList = document.getElementById('summary-list');
+            const noSlotsMsg = document.getElementById('no-slots-msg');
+            const submitBtn = document.getElementById('submit-btn');
+            const studentNameInput = document.getElementById('studentName');
+            const studentIdInput = document.getElementById('studentId');
+            const studentEmailInput = document.getElementById('studentEmail');
+            const errorMsg = document.getElementById('error-msg');
+            const successMsg = document.getElementById('success-msg');
+
+            // --- STEP 4: PASTE YOUR WEB APP URL HERE ---
+            // Replace the placeholder URL below with the Web app URL you copied from Google Apps Script.
+            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbywYfq7PL25P8BSrlezCXoYrWZFOjgR8A3Alj8f2iGGnvP4CUHpxJllxSf4xnb9h-DX/exec';
+
+            let selectedSlots = {};
+
+            const scheduleData = {
+                'AM': {
+                    label: 'Before School',
+                    time: '6:45 - 7:05 am',
+                    slots: {
+                        'Monday': { teacher: 'Stivers', room: '1704', available: true },
+                        'Tuesday': { teacher: 'Mark', room: '1707', available: true },
+                        'Wednesday': { text: 'By Appointment Only', available: false },
+                        'Thursday': { teacher: 'Johnson', room: '1701', available: true },
+                        'Friday': { teacher: 'Stivers', room: '1704', available: true }
+                    }
+                },
+                'PM': {
+                    label: 'After School',
+                    time: '2:45 - 3:15 pm',
+                    slots: {
+                        'Monday': { teacher: 'Hardsteen', room: '1705', available: true },
+                        'Tuesday': { teacher: 'Duncan', room: '1705', available: true },
+                        'Wednesday': { text: 'Geometry PLC; No Tutoring', available: false },
+                        'Thursday': { teacher: 'Hartley', room: '1707', available: true },
+                        'Friday': { text: 'By Appointment Only', available: false }
+                    }
+                }
+            };
+            
+            const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+            const getUpcomingWeek = () => {
+                const weekdays = {};
+                const today = new Date();
+                const dayOfWeek = today.getDay();
+                const daysUntilNextMonday = (dayOfWeek === 0) ? 1 : (8 - dayOfWeek);
+                
+                const nextMonday = new Date(today);
+                nextMonday.setDate(today.getDate() + daysUntilNextMonday);
+                nextMonday.setHours(0, 0, 0, 0);
+
+                for (let i = 0; i < 5; i++) {
+                    const day = new Date(nextMonday);
+                    day.setDate(nextMonday.getDate() + i);
+                    const dayName = day.toLocaleDateString('en-US', { weekday: 'long' });
+                    const formattedDate = day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    weekdays[dayName] = formattedDate;
+                }
+                return weekdays;
+            };
+
+            const updateSummary = () => {
+                summaryList.innerHTML = '';
+                const slots = Object.keys(selectedSlots).sort();
+
+                if (slots.length === 0) {
+                    summaryList.appendChild(noSlotsMsg);
+                    return;
+                }
+                
+                slots.forEach(slotKey => {
+                    const details = selectedSlots[slotKey];
+                    const li = document.createElement('li');
+                    li.textContent = `${details.day} (${details.timeOfDay}): ${details.teacher}, Room ${details.room}`;
+                    summaryList.appendChild(li);
+                });
+            };
+
+            const renderSchedule = () => {
+                const weekDates = getUpcomingWeek();
+
+                dayOrder.forEach(day => {
+                    const th = document.createElement('th');
+                    th.className = "p-3 font-semibold text-sm text-stone-600 border border-stone-200";
+                    th.innerHTML = `${day}<br><span class="font-normal text-xs">${weekDates[day]}</span>`;
+                    tableHead.appendChild(th);
+                });
+
+                Object.keys(scheduleData).forEach(timeOfDay => {
+                    const rowData = scheduleData[timeOfDay];
+                    const tr = document.createElement('tr');
+                    
+                    const th = document.createElement('th');
+                    th.className = "p-3 font-semibold text-sm text-stone-700 border border-stone-200 bg-stone-50";
+                    th.innerHTML = `${rowData.label}<br><span class="font-normal text-xs">${rowData.time}</span>`;
+                    tr.appendChild(th);
+
+                    dayOrder.forEach(day => {
+                        const td = document.createElement('td');
+                        td.className = "p-2 border border-stone-200";
+                        const slotData = rowData.slots[day];
+                        const slotKey = `${weekDates[day]} ${timeOfDay}`;
+
+                        if (slotData.available) {
+                            const slotDiv = document.createElement('div');
+                            slotDiv.className = "p-3 rounded-lg cursor-pointer transition-all duration-200 border-2 border-transparent bg-emerald-50 text-emerald-800 hover:bg-emerald-100";
+                            slotDiv.innerHTML = `<span class="font-bold">${slotData.teacher}</span><br><span class="text-sm">Room ${slotData.room}</span>`;
+                            slotDiv.addEventListener('click', () => {
+                                if (selectedSlots[slotKey]) {
+                                    delete selectedSlots[slotKey];
+                                    slotDiv.classList.remove('slot-selected');
+                                } else {
+                                    selectedSlots[slotKey] = { day: `${day}, ${weekDates[day]}`, timeOfDay, ...slotData };
+                                    slotDiv.classList.add('slot-selected');
+                                }
+                                updateSummary();
+                            });
+                            td.appendChild(slotDiv);
+                        } else {
+                            const slotDiv = document.createElement('div');
+                            slotDiv.className = "p-3 rounded-lg bg-stone-100 text-stone-500 text-sm italic";
+                            slotDiv.innerHTML = slotData.text;
+                            td.appendChild(slotDiv);
+                        }
+                        tr.appendChild(td);
+                    });
+                    tableBody.appendChild(tr);
+                });
+            };
+
+            submitBtn.addEventListener('click', () => {
+                errorMsg.textContent = '';
+                successMsg.textContent = '';
+                const name = studentNameInput.value.trim();
+                const id = studentIdInput.value.trim();
+                const email = studentEmailInput.value.trim();
+
+                if (!name || !id || !email) {
+                    errorMsg.textContent = 'Please fill out all student information fields.';
+                    return;
+                }
+                if (!/^\d{6}$/.test(id)) {
+                    errorMsg.textContent = 'Student ID must be a 6-digit number.';
+                    return;
+                }
+                const emailRegex = /^[a-zA-Z0-9._%+-]+@conroeisd\.net$/;
+                if (!emailRegex.test(email.toLowerCase())) {
+                    errorMsg.textContent = 'Please enter a valid Conroe ISD email address.';
+                    return;
+                }
+                if (Object.keys(selectedSlots).length === 0) {
+                    errorMsg.textContent = 'Please select at least one tutorial slot.';
+                    return;
+                }
+
+                if (SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+                    errorMsg.textContent = 'The form is not connected to a data sheet yet.';
+                    return;
+                }
+
+                // Disable button to prevent multiple submissions
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Submitting...';
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+                const submissionData = {
+                    studentName: name,
+                    studentId: id,
+                    studentEmail: email,
+                    selectedSlots: selectedSlots
+                };
+
+                fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // Important for Google Scripts to avoid CORS issues
+                    cache: 'no-cache',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(submissionData)
+                })
+                .then(res => {
+                    // Because of 'no-cors', we can't read the response, but we can assume success if no network error occurs.
+                    successMsg.textContent = 'Request submitted successfully!';
+                    studentNameInput.value = '';
+                    studentIdInput.value = '';
+                    studentEmailInput.value = '';
+                    selectedSlots = {};
+                    document.querySelectorAll('.slot-selected').forEach(el => el.classList.remove('slot-selected'));
+                    updateSummary();
+                })
+                .catch(error => {
+                    console.error('Error!', error.message);
+                    errorMsg.textContent = 'An error occurred. Please try again.';
+                })
+                .finally(() => {
+                    // Re-enable button
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit Request';
+                    submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                });
+            });
+
+            renderSchedule();
+            updateSummary();
+        });
+    </script>
+</body>
+</html>
+
