@@ -9,14 +9,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Chosen Palette: Warm Sandstone -->
-    <!-- Application Structure Plan: The application is designed as a linear, task-oriented SPA. The user follows a simple top-to-bottom flow: 1. Identify themselves (Name/ID). 2. Select desired tutorial slots from a dynamic, weekly calendar interface. 3. Review a real-time summary of their selections. 4. Submit. This structure is chosen for its simplicity and directness, perfectly matching the single-purpose nature of the source report (a sign-up form). It eliminates cognitive load by presenting one task at a time, with conditional logic (AM/PM buttons appearing on click) revealing complexity progressively. -->
-    <!-- Visualization & Content Choices: 
-        - Report Info: Student Name/ID -> Goal: User Identification -> Presentation: Standard HTML text inputs -> Interaction: Text entry -> Justification: Universally understood method for data entry.
-        - Report Info: Tutorial schedule -> Goal: Allow time selection -> Presentation: A dynamic HTML table mimicking the source image, with clickable cells for available slots. -> Interaction: Click a cell to select/deselect a specific teacher's slot. -> Justification: A table provides the best context for a weekly schedule, clearly showing days, times, and availability in a familiar format. This is more intuitive than a dynamic button list for this specific data.
-        - Report Info: Unavailable slots (Wednesday, Friday PM) -> Goal: Communicate constraints -> Presentation: Disabled, non-interactive cells in the table with distinct styling. -> Interaction: None (cursor-not-allowed). -> Justification: Visually communicates unavailability at a glance within the schedule's context.
-        - Report Info: User's chosen slots -> Goal: Provide confirmation -> Presentation: Dynamic HTML list -> Interaction: Updates in real-time as user makes selections. -> Justification: Provides constant, clear feedback, reducing errors and improving user confidence before submission.
-        - Note: No data visualizations like charts were specified in the source report, so Chart.js/Plotly.js were not used. -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -100,9 +92,8 @@
             const errorMsg = document.getElementById('error-msg');
             const successMsg = document.getElementById('success-msg');
 
-            // --- STEP 4: PASTE YOUR WEB APP URL HERE ---
-            // Replace the placeholder URL below with the Web app URL you copied from Google Apps Script.
-            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwMLey637B3ZNGqUz8uWIRgezUjNl_0xd9OpaO_9c2x2XtSioHJX3SMcY4C1TV3jfM/exec';
+            // --- IMPORTANT: Ensure this URL matches your active Google Script deployment ---
+            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbywYfq7PL25P8BSrlezCXoYrWZFOjgR8A3Alj8f2iGGnvP4CUHpxJllxSf4xnb9h-DX/exec';
 
             let selectedSlots = {};
 
@@ -111,10 +102,10 @@
                     label: 'Before School',
                     time: '6:45 - 7:05 am',
                     slots: {
-                        'Monday': { teacher: 'Stivers', room: '1704', available: true },
+                        'Monday': { teacher: 'Stivers-Hardsteen', room: '1704', available: true },
                         'Tuesday': { teacher: 'Mark', room: '1707', available: true },
-                        'Wednesday': { text: 'By Appointment Only', available: false },
-                        'Thursday': { teacher: 'Johnson', room: '1701', available: true },
+                        'Wednesday': { text: 'Geometry PLC; No Tutoring', available: false },
+                        'Thursday': { teacher: 'Hartley', room: '1707', available: true },
                         'Friday': { teacher: 'Stivers', room: '1704', available: true }
                     }
                 },
@@ -122,10 +113,10 @@
                     label: 'After School',
                     time: '2:45 - 3:15 pm',
                     slots: {
-                        'Monday': { teacher: 'Hardsteen', room: '1705', available: true },
+                        'Monday': { teacher: 'Stivers', room: '1704', available: true },
                         'Tuesday': { teacher: 'Duncan', room: '1705', available: true },
                         'Wednesday': { text: 'Geometry PLC; No Tutoring', available: false },
-                        'Thursday': { teacher: 'Hartley', room: '1707', available: true },
+                        'Thursday': { teacher: 'Johnson', room: '1701', available: true },
                         'Friday': { text: 'By Appointment Only', available: false }
                     }
                 }
@@ -247,11 +238,6 @@
                     return;
                 }
 
-                if (SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
-                    errorMsg.textContent = 'The form is not connected to a data sheet yet.';
-                    return;
-                }
-
                 // Disable button to prevent multiple submissions
                 submitBtn.disabled = true;
                 submitBtn.textContent = 'Submitting...';
@@ -266,7 +252,7 @@
 
                 fetch(SCRIPT_URL, {
                     method: 'POST',
-                    mode: 'no-cors', // Important for Google Scripts to avoid CORS issues
+                    mode: 'no-cors',
                     cache: 'no-cache',
                     headers: {
                         'Content-Type': 'application/json',
@@ -274,7 +260,6 @@
                     body: JSON.stringify(submissionData)
                 })
                 .then(res => {
-                    // Because of 'no-cors', we can't read the response, but we can assume success if no network error occurs.
                     successMsg.textContent = 'Request submitted successfully!';
                     studentNameInput.value = '';
                     studentIdInput.value = '';
@@ -288,7 +273,6 @@
                     errorMsg.textContent = 'An error occurred. Please try again.';
                 })
                 .finally(() => {
-                    // Re-enable button
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Submit Request';
                     submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -301,8 +285,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
